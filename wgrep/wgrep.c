@@ -1,32 +1,69 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define LINELEN 255
 
-void wgrep(char *searchTerm, char *fileName);
+void wgrepFile(char *searchTerm, FILE *inputStream);
+int checkLine(char *searchTerm, char *lineBuffer, int searchTermLen, int lineBufferLen);
+FILE *openFile(char *fileName);
 
 int main(int argc, char *argv[]){
-    for (int i=2; i<argc; i++){
-        wgrep(argv[1], argv[i]);
+    if (argc < 2){
+        printf("wgrep: searchterm [file ...]\n");
+        exit(1);
+    } else if (argc == 2){
+        wgrepFile(argv[1], stdin);
+    } else if (argc > 2){
+        for (int i=2; i<argc; i++){
+            FILE *inputStream = openFile(argv[i]);
+            wgrepFile(argv[1], inputStream);
+        }
     }
 }
 
-void wgrep(char *searchTerm, char *fileName){
+FILE *openFile(char *fileName){
     FILE *inputStream;
+    if ((inputStream = fopen(fileName, "r")) == NULL){
+        fprintf(stderr, "wgrep: cannot open file\n");
+        exit(1);
+    }
+    return inputStream;
+}
 
+void wgrepFile(char *searchTerm, FILE *inputStream){
     char *lineBuffer;
     size_t bufsize = LINELEN;
 
-    if ((inputStream = fopen(fileName, "r")) == NULL){
-        fprintf(stderr, "Error opening file: %s\n", fileName);
-    }
-
     lineBuffer = (char *) malloc(bufsize * sizeof(char));
+    int lineBufferLen;
+    int searchTermLen = strlen(searchTerm);
 
-    while(getline(&lineBuffer, &bufsize, inputStream) != EOF){
-        //Here is where we will check for a substring matching the search term.
-        //Prolly we'll do this with nested loops doing comparisons.
-        printf("%s", lineBuffer);
+    while((lineBufferLen = getline(&lineBuffer, &bufsize, inputStream)) != EOF){
+        if(checkLine(searchTerm, lineBuffer, searchTermLen, lineBufferLen)){
+            printf("%s", lineBuffer);
+        }
     }
 } 
 
+int checkLine(char *searchTerm, char *lineBuffer, int searchTermLen, int lineBufferLen){
+    int x = 0;
+    int match = 0;
+    for (int i = 0; i <= lineBufferLen - searchTermLen ; i++){
+        if (searchTerm[x] == lineBuffer[i]){
+            match = 1;
+        }
+        while (match && (searchTerm[x] != '\0')){
+            if (searchTerm[x] == lineBuffer[i+x]){
+                x++;
+            } else {
+                match = 0;
+                x=0;
+            }
+        }
+        if (match){
+            return 1;
+        }
+    }
+    return 0;
+}
