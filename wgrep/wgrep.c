@@ -5,7 +5,6 @@
 #define LINELEN 255
 
 void wgrepFile(char *searchTerm, FILE *inputStream);
-int checkLine(char *searchTerm, char *lineBuffer, int searchTermLen, int lineBufferLen);
 FILE *openFile(char *fileName);
 
 int main(int argc, char *argv[]){
@@ -40,30 +39,25 @@ void wgrepFile(char *searchTerm, FILE *inputStream){
     int searchTermLen = strlen(searchTerm);
 
     while((lineBufferLen = getline(&lineBuffer, &bufsize, inputStream)) != EOF){
-        if(checkLine(searchTerm, lineBuffer, searchTermLen, lineBufferLen)){
-            printf("%s", lineBuffer);
+        int x = 0;
+        int match = 0;
+        for (int i = 0; i <= lineBufferLen - searchTermLen ; i++){
+            if (searchTerm[x] == lineBuffer[i]){
+                match = 1;
+            }
+            while (match && (searchTerm[x] != '\0')){
+                if (searchTerm[x] == lineBuffer[i+x]){
+                    x++;
+                } else {
+                    match = 0;
+                    x=0;
+                }
+            }
+            if (match){
+                printf("%s", lineBuffer);
+                break;
+            }
         }
     }
 } 
 
-int checkLine(char *searchTerm, char *lineBuffer, int searchTermLen, int lineBufferLen){
-    int x = 0;
-    int match = 0;
-    for (int i = 0; i <= lineBufferLen - searchTermLen ; i++){
-        if (searchTerm[x] == lineBuffer[i]){
-            match = 1;
-        }
-        while (match && (searchTerm[x] != '\0')){
-            if (searchTerm[x] == lineBuffer[i+x]){
-                x++;
-            } else {
-                match = 0;
-                x=0;
-            }
-        }
-        if (match){
-            return 1;
-        }
-    }
-    return 0;
-}
